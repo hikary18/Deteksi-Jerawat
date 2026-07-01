@@ -3,16 +3,10 @@ import os
 import numpy as np
 from PIL import Image
 
-# ==========================================
-# 1. OPTIMALISASI AWAL (Mencegah Lag & Flicker)
-# ==========================================
 # Matikan pencarian driver GPU CUDA secara agresif untuk mempercepat load TensorFlow di CPU
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
-# ==========================================
-# 2. KONFIGURASI HALAMAN STREAMLIT
-# ==========================================
 st.set_page_config(
     page_title="AcneCare AI - Premium Dermatological Assistant",
     page_icon="🩺",
@@ -20,13 +14,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Gaya CSS Premium & Estetik (Klinis, Bersih, Profesional)
 st.markdown("""
     <style>
     /* Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     
-    /* Global Styles */
+    /* Gaya Global */
     html, body, [class*="css"] {
         font-family: 'Plus Jakarta Sans', sans-serif;
         color: #1E293B;
@@ -71,7 +64,7 @@ st.markdown("""
         color: #F1F5F9 !important;
     }
     
-    /* Cards (Hasil Deteksi) */
+    /* Kartu Detail Laporan Hasil Deteksi */
     .result-card {
         background-color: white;
         border-radius: 16px;
@@ -153,7 +146,7 @@ st.markdown("""
         display: block;
     }
     
-    /* Customization for Streamlit Buttons */
+    /* Desain Tombol Interaktif */
     div.stButton > button {
         background-color: #0D9488 !important;
         color: white !important;
@@ -183,9 +176,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 3. KAMUS DATA DETAIL JERAWAT (BAHASA INDONESIA)
-# ==========================================
 ACNE_DETAILS = {
     "Blackheads": {
         "id_name": "Komedo Terbuka (Blackheads)",
@@ -193,7 +183,7 @@ ACNE_DETAILS = {
         "badge_class": "badge-ringan",
         "desc": "Komedo yang terbentuk akibat pori-pori tersumbat oleh sebum (minyak) dan sel kulit mati, di mana bagian atasnya terbuka dan teroksidasi oleh udara sehingga berwarna hitam.",
         "causes": "Produksi minyak berlebih, penumpukan sel kulit mati, dan perubahan hormon.",
-        "solutions": "Gunakan pembersih wajah mengandung Salicylic Acid (BHA), hindari memencet komedo, dan lakukan eksfoliasi secara rutin (1-2 kali seminggu)."
+        "solutions": "Gunakan pemersih wajah mengandung Salicylic Acid (BHA), hindari memencet komedo, dan lakukan eksfoliasi secara rutin (1-2 kali seminggu)."
     },
     "Cyst": {
         "id_name": "Jerawat Batu (Cystic Acne)",
@@ -229,9 +219,6 @@ ACNE_DETAILS = {
     }
 }
 
-# ==========================================
-# 4. CHATBOT LOCAL NLP ENGINE (MENGELOLA TANYA JAWAB BEBAS)
-# ==========================================
 def get_local_bot_response(query):
     query = query.lower().strip()
     
@@ -305,7 +292,7 @@ def get_local_bot_response(query):
                 "- **Pustula:** Kelanjutan papula yang sudah memiliki titik kuning/putih berisi nanah di bagian puncaknya.\n\n"
                 "**Penanganan:** Jangan disentuh! Gunakan obat totol jerawat mengandung *Salicylic Acid* atau *Benzoyl Peroxide* tipis-tipis di atasnya untuk meredakan peradangan.")
 
-    # 10. Default / Fallback (Smart Suggestions)
+    # 10. Default / Fallback
     else:
         return ("Saya memahami Anda ingin mengetahui informasi seputar perawatan wajah.\n\n"
                 "Untuk mendapatkan jawaban medis terbaik, silakan ketik kata kunci spesifik seputar keluhan Anda, seperti:\n"
@@ -316,9 +303,6 @@ def get_local_bot_response(query):
                 "- 🩹 **\"Bekas\"** atau **\"Bopeng\"** (cara merawat kulit pasca-jerawat sembuh)\n"
                 "- 🚫 **\"Pencet\"** (bahaya memencet jerawat sendiri)")
 
-# ==========================================
-# 5. CACHING SEBAGAI LAZY LOADING
-# ==========================================
 @st.cache_resource
 def load_acne_model():
     import tensorflow as tf
@@ -336,9 +320,6 @@ def get_class_names():
 
 class_names = get_class_names()
 
-# ==========================================
-# 6. INITIALIZE SESSION STATE (Anti-Flicker)
-# ==========================================
 if "uploaded_image" not in st.session_state:
     st.session_state.uploaded_image = None
 if "image_source" not in st.session_state:
@@ -351,32 +332,13 @@ if "confidence" not in st.session_state:
     st.session_state.confidence = 0.0
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
-        {"role": "model", "text": "Halo! Saya adalah **AcneCare AI Guide**. Saya siap membantu Anda memberikan informasi terpercaya seputar kesehatan kulit wajah dan jerawat tanpa perlu koneksi API Key.\n\nSilakan ketik pertanyaan Anda secara bebas di bawah ini, atau gunakan pustaka bantuan di sebelah kanan!"}
+        {"role": "model", "text": "Halo! Saya adalah **AcneCare AI Guide**. Saya siap membantu Anda memberikan informasi terpercaya seputar kesehatan kulit wajah dan jerawat secara instan 100% offline.\n\nSilakan ketik pertanyaan Anda secara bebas di bawah ini, atau gunakan pintasan bantuan di sebelah kanan!"}
     ]
 
-# ==========================================
-# 7. SIDEBAR & MENU NAVIGASI
-# ==========================================
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2854/2854101.png", width=90)
 st.sidebar.title("AcneCare AI")
 st.sidebar.caption("Sistem Diagnosis & Konsultasi Jerawat")
 menu = st.sidebar.radio("PILIH LAYANAN UTAMA:", ["🔎 Deteksi Jerawat AI", "💬 Tanya Jawab Chatbot"])
-
-st.sidebar.markdown("---")
-# Opsi Kunci API Gemini (Opsional)
-st.sidebar.markdown("### ⚙️ Pengaturan API Gemini (Opsional)")
-api_key = st.sidebar.text_input("Gemini API Key:", type="password", value=os.environ.get("GEMINI_API_KEY", ""))
-
-if api_key:
-    import google.generativeai as genai
-    genai.configure(api_key=api_key)
-    chat_model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        system_instruction="Anda adalah AcneCare AI, pakar kulit dermatologi digital ramah dari Indonesia. Jawab secara informatif, hangat, dan ramah seputar keluhan jerawat."
-    )
-    st.sidebar.success("🔑 API Gemini Aktif! Chatbot akan menggunakan AI Pintar.")
-else:
-    st.sidebar.info("🤖 Mode Offline Aktif. Chatbot menggunakan Mesin NLP Lokal.")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
@@ -386,9 +348,6 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# MENU 1: DETEKSI JERAWAT AI
-# ==========================================
 if menu == "🔎 Deteksi Jerawat AI":
     # Hero Header Banner
     st.markdown("""
@@ -410,6 +369,7 @@ if menu == "🔎 Deteksi Jerawat AI":
         else:
             temp_img = st.camera_input("Ambil foto wajah secara langsung")
             
+        # Logika penguncian session state untuk mencegah flicker saat memuat data baru
         if temp_img is not None:
             is_new_image = False
             if st.session_state.uploaded_image is None:
@@ -436,6 +396,7 @@ if menu == "🔎 Deteksi Jerawat AI":
                 st.image(image, caption="Gambar Input", use_column_width=True)
                 st.write("")
                 
+                # Proses prediksi dan penguncian data hasil ke dalam session state
                 if st.button("Mulai Analisis Deteksi", use_container_width=True):
                     with st.spinner("Sistem sedang mencocokkan matriks piksel..."):
                         model = load_acne_model()
@@ -462,6 +423,7 @@ if menu == "🔎 Deteksi Jerawat AI":
                             st.session_state.prediction_done = True
                             st.rerun()
                 
+                # Tampilkan visual hasil hanya jika data session state terpenuhi
                 if st.session_state.prediction_done and st.session_state.predicted_class is not None:
                     predicted_class = st.session_state.predicted_class
                     confidence = st.session_state.confidence
@@ -501,9 +463,6 @@ if menu == "🔎 Deteksi Jerawat AI":
         else:
             st.info("Silakan unggah gambar wajah atau gunakan kamera depan pada panel kiri untuk mendapatkan visualisasi hasil analisis medis di sini.")
 
-# ==========================================
-# MENU 2: TANYA JAWAB CHATBOT AI
-# ==========================================
 elif menu == "💬 Tanya Jawab Chatbot":
     # Hero Header Banner Chatbot
     st.markdown("""
@@ -546,18 +505,9 @@ elif menu == "💬 Tanya Jawab Chatbot":
             # Masukkan chat user ke history
             st.session_state.chat_history.append({"role": "user", "text": user_input})
             
-            # Cari respons
+            # Cari respons lokal secara luring dan instan
             with st.spinner("AcneCare AI sedang mengetik jawaban..."):
-                if api_key:
-                    # Guna Gemini (Pintar Eksternal)
-                    try:
-                        response = chat_model.generate_content(user_input)
-                        bot_response = response.text
-                    except Exception as e:
-                        bot_response = f"Gagal menghubungi server Gemini: {str(e)}. Mengaktifkan model lokal cadangan...\n\n" + get_local_bot_response(user_input)
-                else:
-                    # Guna NLP Engine Lokal (Aman, Offline, Bebas Kunci API)
-                    bot_response = get_local_bot_response(user_input)
+                bot_response = get_local_bot_response(user_input)
             
             # Masukkan respons bot ke history
             st.session_state.chat_history.append({"role": "model", "text": bot_response})
