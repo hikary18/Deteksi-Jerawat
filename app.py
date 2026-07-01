@@ -6,6 +6,7 @@ from PIL import Image
 # ==========================================
 # 1. OPTIMALISASI AWAL (Mencegah Lag & Flicker)
 # ==========================================
+# Matikan pencarian driver GPU CUDA secara agresif untuk mempercepat load TensorFlow di CPU
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
@@ -111,9 +112,13 @@ st.markdown("""
     
     /* Chat UI Styling */
     .chat-container {
-        max-height: 500px;
+        max-height: 480px;
         overflow-y: auto;
         padding: 10px;
+        border: 1px solid #E2E8F0;
+        border-radius: 16px;
+        background-color: #FFFFFF;
+        margin-bottom: 15px;
     }
     .chat-bubble {
         padding: 16px 20px;
@@ -132,7 +137,7 @@ st.markdown("""
         border-left: 5px solid #0EA5E9;
     }
     .ai-bubble {
-        background-color: white;
+        background-color: #F8FAFC;
         color: #334155;
         border-bottom-left-radius: 4px;
         max-width: 80%;
@@ -164,9 +169,6 @@ st.markdown("""
         background-color: #0F766E !important;
         box-shadow: 0 10px 15px -3px rgba(13, 148, 136, 0.3) !important;
         transform: translateY(-1px);
-    }
-    div.stButton > button:active {
-        transform: translateY(1px);
     }
     
     /* Info Box */
@@ -228,42 +230,91 @@ ACNE_DETAILS = {
 }
 
 # ==========================================
-# 4. DATABASE TANYA JAWAB CHATBOT (BISA DIISI/DIEDIT SENDIRI)
+# 4. CHATBOT LOCAL NLP ENGINE (MENGELOLA TANYA JAWAB BEBAS)
 # ==========================================
-CHATBOT_DATABASE = {
-    "✨ Rekomendasi Skincare Dasar": {
-        "Bagaimana urutan basic skincare yang benar untuk kulit berjerawat?": 
-            "Urutan basic skincare yang aman untuk kulit berjerawat adalah:\n\n"
-            "1. **Double Cleansing**: Bersihkan wajah menggunakan micellar water lalu cuci muka dengan sabun lembut.\n"
-            "2. **Moisturizer**: Gunakan pelembap bertekstur gel ringan yang berlabel *non-comedogenic*.\n"
-            "3. **Sunscreen**: Gunakan tabir surya SPF 30 atau lebih di siang hari untuk mencegah noda jerawat menjadi hitam.",
-        "Kandungan skincare apa saja yang ampuh mengatasi jerawat?": 
-            "Beberapa kandungan aktif yang sangat direkomendasikan untuk kulit berjerawat antara lain:\n\n"
-            "- **Salicylic Acid (BHA)**: Membersihkan minyak berlebih jauh ke dalam pori-pori.\n"
-            "- **Niacinamide / Centella Asiatica**: Menenangkan kulit yang meradang dan merah.\n"
-            "- **Tea Tree Oil**: Memiliki sifat antibakteri alami untuk melawan bakteri penyebab jerawat."
-    },
-    "⚠️ Kebiasaan & Penyebab Jerawat": {
-        "Mengapa jerawat saya tidak kunjung sembuh?": 
-            "Jerawat yang membandel atau sulit sembuh bisa dipicu oleh beberapa hal:\n\n"
-            "- Sering menyentuh atau memencet jerawat dengan tangan kotor.\n"
-            "- Jarang membersihkan sarung bantal atau layar handphone.\n"
-            "- Stres berlebih, kurang tidur, atau ketidakseimbangan hormon.\n"
-            "- Terlalu sering bergonta-ganti produk skincare baru dalam waktu singkat.",
-        "Apakah pola makan manis dan susu bisa memicu jerawat?": 
-            "Ya, benar. Makanan tinggi gula (*high glycemic*) serta produk olahan susu (*dairy products*) dapat merangsang hormon insulin. Lonjakan insulin ini memicu produksi kelenjar minyak secara berlebihan, yang akhirnya menyumbat pori-pori wajah Anda."
-    },
-    "🩹 Solusi Penanganan Mandiri": {
-        "Apa yang harus dilakukan saat jerawat batu terasa sakit?": 
-            "Jika Anda memiliki jerawat batu (Cystic Acne) yang sakit dan bengkak:\n\n"
-            "1. **Kompres Es Batu**: Bungkus es batu dengan handuk bersih, kompres pada jerawat selama 5 menit untuk meredakan nyeri dan bengkak.\n"
-            "2. **Gunakan Obat Totol**: Aplikasikan obat totol dengan kandungan Sulfur atau Benzoyl Peroxide.\n"
-            "3. **Hindari Scrub**: Jangan gunakan scrub wajah fisik karena akan merusak barier kulit Anda.\n"
-            "4. **Jangan Dipencet**: Memencet jerawat batu akan merusak jaringan kulit dalam dan memicu bopeng (*scars*).",
-        "Bagaimana cara menghilangkan bekas jerawat kemerahan (PIE)?": 
-            "Untuk meredakan bekas jerawat kemerahan (PIE), gunakan skincare yang fokus pada pemulihan *skin barrier* dan anti-inflamasi, seperti produk yang mengandung **Centella Asiatica**, **Niacinamide**, **Ceramide**, atau **Snail Mucin**. Jangan lupa untuk selalu disiplin menggunakan sunscreen setiap hari agar kondisinya tidak memburuk."
-    }
-}
+def get_local_bot_response(query):
+    query = query.lower().strip()
+    
+    # 1. Greetings / Salam
+    if any(w in query for w in ["halo", "hai", "pagi", "siang", "sore", "malam", "assalamualaikum", "hello", "hi"]):
+        return ("Halo! Saya adalah **AcneCare AI Guide**. Saya siap membantu menjawab segala "
+                "pertanyaan Anda seputar jenis jerawat, penyebab, rekomendasi skincare, hingga kebiasaan "
+                "harian untuk menjaga kesehatan kulit wajah. Silakan tanyakan keluhan Anda secara bebas!")
+    
+    # 2. Jerawat Batu / Cyst
+    elif any(w in query for w in ["batu", "cyst", "keras", "bengkak", "mendalam", "nyeri", "sakit"]):
+        return ("**Jerawat Batu (Cystic Acne)** tergolong jerawat berat yang terbentuk jauh di dalam lapisan kulit.\n\n"
+                "⚠️ **PENTING:** Sangat dilarang untuk memencet jerawat batu secara mandiri! Memencetnya akan merusak jaringan kulit dalam, "
+                "menyebarkan bakteri secara horizontal, dan berisiko sangat tinggi memicu bopeng (*atrophic scars*) permanen.\n\n"
+                "**Langkah Penanganan Mandiri:**\n"
+                "- Kompres dengan es batu yang dibalut handuk bersih selama 3-5 menit untuk meredakan inflamasi dan nyeri.\n"
+                "- Gunakan obat totol jerawat mengandung *Benzoyl Peroxide* atau *Sulfur*.\n"
+                "- Gunakan produk perawatan yang mengandung penenang barier (*skin barrier*) seperti *Centella Asiatica* atau *Ceramide*.\n"
+                "- Sangat disarankan untuk memeriksakan diri ke Dokter Spesialis Kulit (Sp.DVE) jika bengkak semakin membesar.")
+    
+    # 3. Komedo / Blackheads / Whiteheads
+    elif any(w in query for w in ["komedo", "blackhead", "whitehead", "terbuka", "tertutup", "pori", "hidung"]):
+        return ("**Komedo** tersusun atas minyak berlebih dan sel kulit mati yang menyumbat pori-pori wajah Anda:\n\n"
+                "- **Blackheads (Komedo Terbuka):** Sumbatannya terbuka sehingga bagian atasnya teroksidasi oleh udara dan menghitam.\n"
+                "- **Whiteheads (Komedo Tertutup):** Sumbatannya dilapisi oleh lapisan tipis kulit sehingga tampak sebagai bintil putih.\n\n"
+                "**Solusi Terbaik:**\n"
+                "1. Bersihkan wajah dengan pembersih yang mengandung **Salicylic Acid (BHA)** untuk melarutkan minyak menyumbat di pori.\n"
+                "2. Lakukan eksfoliasi kimiawi menggunakan kombinasi AHA/BHA secara teratur (1-2 kali seminggu).\n"
+                "3. Pilih produk dengan label *non-comedogenic*.")
+    
+    # 4. Skincare Dasar / Basic Skincare
+    elif any(w in query for w in ["skincare", "basic", "urutan", "tahapan", "cuci muka", "cleanser", "moisturizer", "sunscreen", "pelembap"]):
+        return ("Bagi pejuang jerawat (*acne warrior*), menggunakan urutan **Basic Skincare** yang tepat dan lembut adalah kunci pemulihan:\n\n"
+                "1. **Double Cleansing:** Bersihkan sisa kotoran di sore hari dengan *micellar water* non-alkohol, lalu bilas dengan sabun wajah yang lembut (hindari sabun dengan scrub kasar).\n"
+                "2. **Moisturizer (Pelembap):** Pilih pelembap bertekstur gel ringan yang melembapkan kulit tanpa terasa berat atau menyumbat pori.\n"
+                "3. **Sunscreen (Tabir Surya):** Wajib gunakan sunscreen minimal SPF 30 di siang hari agar bekas jerawat tidak berubah menjadi noda hitam gelap akibat paparan UV.")
+    
+    # 5. Kandungan Aktif / Ingredients
+    elif any(w in query for w in ["kandungan", "bahan", "aktif", "salicylic", "bha", "benzoyl", "sulfur", "niacinamide", "retinol"]):
+        return ("Berikut adalah beberapa zat aktif yang paling direkomendasikan klinis untuk kulit berjerawat:\n\n"
+                "- **Salicylic Acid (BHA):** Masuk ke dalam pori-pori untuk membersihkan sumbatan lemak (komedo).\n"
+                "- **Benzoyl Peroxide:** Membunuh bakteri penyebab jerawat secara cepat.\n"
+                "- **Sulfur:** Mengeringkan nanah pada jerawat pustula secara instan.\n"
+                "- **Niacinamide:** Mengontrol produksi sebum harian sekaligus memudarkan bekas kemerahan.\n"
+                "- **Centella Asiatica:** Menenangkan barier kulit yang meradang.")
+    
+    # 6. Bekas Jerawat / PIE / PIH / Bopeng
+    elif any(w in query for w in ["bekas", "bopeng", "merah", "hitam", "pie", "pih", "noda"]):
+        return ("Bekas jerawat secara umum terbagi menjadi:\n\n"
+                "1. **PIE (Post-Inflammatory Erythema):** Berwarna kemerahan akibat pelebaran pembuluh darah. Atasi dengan bahan yang menenangkan seperti *Centella Asiatica*, *Ceramide*, atau *Snail Mucin*.\n"
+                "2. **PIH (Post-Inflammatory Hyperpigmentation):** Berwarna cokelat/hitam karena pigmentasi melanin. Atasi dengan zat pencerah seperti *Vitamin C*, *Alpha Arbutin*, atau *Retinol*.\n"
+                "3. **Bopeng (Atrophic Scars):** Jaringan parut yang amblas ke dalam akibat memencet jerawat batu. Kondisi bopeng tidak bisa hilang hanya dengan produk skincare, Anda harus melakukan perawatan klinis seperti *Laser CO2 Fractional* atau *Microneedling* ke klinik kecantikan profesional.")
+    
+    # 7. Memencet Jerawat
+    elif any(w in query for w in ["pencet", "tekan", "tangan", "pecah", "pecahin"]):
+        return ("🚫 **Sangat Dilarang Memencet Jerawat Sendiri!**\n\n"
+                "Memencet jerawat, terutama jerawat batu (*Cyst*) dan bernanah (*Pustule*), akan mempercepat penyebaran bakteri ke area sekitarnya serta memicu peradangan di lapisan dermis kulit bagian dalam.\n"
+                "Hal ini menyebabkan pemulihan berjalan sangat lambat dan hampir dipastikan akan meninggalkan bekas permanen berupa bopeng.")
+    
+    # 8. Diet / Pantangan Makanan
+    elif any(w in query for w in ["makan", "susu", "manis", "gula", "dairy", "gorengan", "cokelat"]):
+        return ("Ya, pola makan sangat berpengaruh terhadap jerawat:\n\n"
+                "- **Gula & Karbohidrat Olahan:** Makanan tinggi glikemik memicu lonjakan insulin yang menstimulasi kelenjar minyak memproduksi sebum berlebih.\n"
+                "- **Produk Olahan Susu (Dairy Products):** Susu sapi murni mengandung hormon pertumbuhan yang dapat menyumbat pori-pori pada individu yang sensitif.\n\n"
+                "**Saran:** Perbanyak asupan air putih, kurangi gorengan/boba, dan perbanyak makan sayur serta buah kaya antioksidan.")
+
+    # 9. Papula & Pustula (Jerawat Nanah)
+    elif any(w in query for w in ["papula", "pustula", "nanah", "merah", "benjolan"]):
+        return ("**Papula dan Pustula** adalah jerawat meradang tingkat sedang:\n\n"
+                "- **Papula:** Benjolan kemerahan pada kulit tanpa bintik putih di atasnya. Terasa nyeri bila disentuh.\n"
+                "- **Pustula:** Kelanjutan papula yang sudah memiliki titik kuning/putih berisi nanah di bagian puncaknya.\n\n"
+                "**Penanganan:** Jangan disentuh! Gunakan obat totol jerawat mengandung *Salicylic Acid* atau *Benzoyl Peroxide* tipis-tipis di atasnya untuk meredakan peradangan.")
+
+    # 10. Default / Fallback (Smart Suggestions)
+    else:
+        return ("Saya memahami Anda ingin mengetahui informasi seputar perawatan wajah.\n\n"
+                "Untuk mendapatkan jawaban medis terbaik, silakan ketik kata kunci spesifik seputar keluhan Anda, seperti:\n"
+                "- 🛒 **\"Skincare\"** atau **\"Urutan\"** (untuk urutan basic skincare berjerawat)\n"
+                "- 🌋 **\"Jerawat Batu\"** atau **\"Batu\"** (cara menangani jerawat batu yang nyeri)\n"
+                "- 🧼 **\"Komedo\"** atau **\"Pori\"** (solusi mengatasi komedo hitam/putih)\n"
+                "- 🍎 **\"Makanan\"** atau **\"Susu\"** (pantangan diet untuk wajah berjerawat)\n"
+                "- 🩹 **\"Bekas\"** atau **\"Bopeng\"** (cara merawat kulit pasca-jerawat sembuh)\n"
+                "- 🚫 **\"Pencet\"** (bahaya memencet jerawat sendiri)")
 
 # ==========================================
 # 5. CACHING SEBAGAI LAZY LOADING
@@ -300,7 +351,7 @@ if "confidence" not in st.session_state:
     st.session_state.confidence = 0.0
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
-        {"role": "model", "text": "Halo! Saya adalah **AcneCare AI Guide**. Saya siap membantu Anda memberikan informasi terpercaya seputar kesehatan kulit wajah dan jerawat tanpa perlu koneksi API Key.\n\nSilakan pilih salah satu kategori keluhan di panel sebelah kanan untuk menampilkan pertanyaan terarah!"}
+        {"role": "model", "text": "Halo! Saya adalah **AcneCare AI Guide**. Saya siap membantu Anda memberikan informasi terpercaya seputar kesehatan kulit wajah dan jerawat tanpa perlu koneksi API Key.\n\nSilakan ketik pertanyaan Anda secara bebas di bawah ini, atau gunakan pustaka bantuan di sebelah kanan!"}
     ]
 
 # ==========================================
@@ -310,6 +361,22 @@ st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2854/2854101.png", widt
 st.sidebar.title("AcneCare AI")
 st.sidebar.caption("Sistem Diagnosis & Konsultasi Jerawat")
 menu = st.sidebar.radio("PILIH LAYANAN UTAMA:", ["🔎 Deteksi Jerawat AI", "💬 Tanya Jawab Chatbot"])
+
+st.sidebar.markdown("---")
+# Opsi Kunci API Gemini (Opsional)
+st.sidebar.markdown("### ⚙️ Pengaturan API Gemini (Opsional)")
+api_key = st.sidebar.text_input("Gemini API Key:", type="password", value=os.environ.get("GEMINI_API_KEY", ""))
+
+if api_key:
+    import google.generativeai as genai
+    genai.configure(api_key=api_key)
+    chat_model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction="Anda adalah AcneCare AI, pakar kulit dermatologi digital ramah dari Indonesia. Jawab secara informatif, hangat, dan ramah seputar keluhan jerawat."
+    )
+    st.sidebar.success("🔑 API Gemini Aktif! Chatbot akan menggunakan AI Pintar.")
+else:
+    st.sidebar.info("🤖 Mode Offline Aktif. Chatbot menggunakan Mesin NLP Lokal.")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
@@ -442,7 +509,7 @@ elif menu == "💬 Tanya Jawab Chatbot":
     st.markdown("""
         <div class='hero-banner' style='background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);'>
             <div class='hero-title' style='background:none; -webkit-text-fill-color:white; color:white;'>💬 AcneCare Q&A Guide</div>
-            <div class='hero-subtitle' style='color:#CCFBF1;'>Sistem Konsultasi Interaktif Offline — Temukan solusi terpercaya seputar kesehatan kulit tanpa internet</div>
+            <div class='hero-subtitle' style='color:#CCFBF1;'>Sistem Konsultasi Interaktif — Ketik keluhan atau tanyakan apa pun seputar jerawat Anda secara bebas</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -470,28 +537,59 @@ elif menu == "💬 Tanya Jawab Chatbot":
                 """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
+        # Form Input Bebas (Bisa Ngetik Bebas)
+        with st.form(key="text_chat_form", clear_on_submit=True):
+            user_input = st.text_input("Ketik pertanyaan Anda tentang jerawat/kulit di sini secara bebas...", placeholder="Contoh: 'Kenapa jerawat batu terasa sakit?' atau 'Skincare untuk komedo'")
+            submit_button = st.form_submit_button(label="Kirim Pertanyaan 🚀", use_container_width=True)
+
+        if submit_button and user_input:
+            # Masukkan chat user ke history
+            st.session_state.chat_history.append({"role": "user", "text": user_input})
+            
+            # Cari respons
+            with st.spinner("AcneCare AI sedang mengetik jawaban..."):
+                if api_key:
+                    # Guna Gemini (Pintar Eksternal)
+                    try:
+                        response = chat_model.generate_content(user_input)
+                        bot_response = response.text
+                    except Exception as e:
+                        bot_response = f"Gagal menghubungi server Gemini: {str(e)}. Mengaktifkan model lokal cadangan...\n\n" + get_local_bot_response(user_input)
+                else:
+                    # Guna NLP Engine Lokal (Aman, Offline, Bebas Kunci API)
+                    bot_response = get_local_bot_response(user_input)
+            
+            # Masukkan respons bot ke history
+            st.session_state.chat_history.append({"role": "model", "text": bot_response})
+            st.rerun()
+
     with guide_col:
-        st.subheader("❓ Pustaka Pertanyaan")
+        st.subheader("❓ Pintasan Pertanyaan Cepat")
         st.markdown("""
         <div class='info-box'>
             <b>Cara Konsultasi:</b><br>
-            Silakan pilih salah satu kategori di bawah ini, lalu klik tombol pertanyaan untuk langsung mendapatkan jawaban dari asisten AI.
+            Tulis keluhan Anda pada kolom di sebelah kiri, atau klik salah satu topik cepat di bawah untuk langsung mendapatkan jawaban dari database kami.
         </div>
         """, unsafe_allow_html=True)
         
-        # Iterasi Kategori Database yang Lebih Cantik
-        for category, qa_pairs in CHATBOT_DATABASE.items():
-            with st.expander(category, expanded=True):
-                for question, answer in qa_pairs.items():
-                    # Tombol Pertanyaan yang dipersonalisasi
-                    if st.button(question, key=question, use_container_width=True):
-                        st.session_state.chat_history.append({"role": "user", "text": question})
-                        st.session_state.chat_history.append({"role": "model", "text": answer})
-                        st.rerun()
+        # Pintasan Cepat untuk Pengguna yang tidak ingin mengetik
+        quick_questions = {
+            "🌟 Jerawat Batu": "Kenapa jerawat batu tidak boleh dipencet dan bagaimana cara menyembuhkannya?",
+            "🧼 Eksfoliasi & Komedo": "Kandungan skincare apa yang cocok untuk melarutkan komedo blackheads?",
+            "🧴 Skincare Dasar": "Bagaimana urutan basic skincare yang aman untuk kulit meradang?",
+            "🍟 Diet & Makanan": "Apakah susu manis dan gorengan bisa memicu munculnya jerawat baru?",
+            "🩸 Bekas Merah & Hitam": "Apa perbedaan bekas jerawat PIE dan PIH serta solusinya?"
+        }
+        
+        for name, query_text in quick_questions.items():
+            if st.button(name, use_container_width=True):
+                st.session_state.chat_history.append({"role": "user", "text": query_text})
+                st.session_state.chat_history.append({"role": "model", "text": get_local_bot_response(query_text)})
+                st.rerun()
                         
         st.write("")
-        if st.button("🧹 Reset Obrolan", use_container_width=True):
+        if st.button("🧹 Reset Percakapan", use_container_width=True):
             st.session_state.chat_history = [
-                {"role": "model", "text": "Halo! Saya adalah **AcneCare AI Guide**. Silakan pilih salah satu pertanyaan yang sudah disediakan di atas untuk mulai berdiskusi!"}
+                {"role": "model", "text": "Halo! Saya adalah **AcneCare AI Guide**. Silakan ketik pertanyaan Anda secara bebas di bawah ini, atau gunakan pustaka bantuan di sebelah kanan!"}
             ]
             st.rerun()
