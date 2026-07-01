@@ -7,7 +7,6 @@ from datetime import datetime
 # ==========================================
 # 1. OPTIMALISASI AWAL (Mencegah Lag & Flicker)
 # ==========================================
-# Menonaktifkan pencarian driver GPU CUDA secara agresif untuk mempercepat load TensorFlow di CPU
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
@@ -15,227 +14,284 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 # 2. KONFIGURASI HALAMAN STREAMLIT
 # ==========================================
 st.set_page_config(
-    page_title="AcneCare AI - Premium Dermatological Assistant",
+    page_title="AcneCare AI - Premium Medicio Style Portal",
     page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Gaya CSS Premium - Terinspirasi dari image_a8e700.jpg, image_a8e725.jpg, dan image_a8e764.jpg
+# Menggunakan aksen utama teal (#3fbbc0) dan abu-abu klinis lembut (#f1f6fe)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     
-    /* Reset & Font Global */
+    /* Reset Global & Background */
     html, body, [data-testid="stSidebar"] {
         font-family: 'Plus Jakarta Sans', sans-serif;
         background-color: #F8FAFC !important;
     }
     
-    /* TOP CONTACT & METADATA BAR (Terinspirasi dari image_a8e764.jpg) */
-    .top-contact-bar {
+    /* 1. TOP UTILITY BAR (Teal Header) */
+    .medicio-top-bar {
+        background-color: #3fbbc0;
+        color: #FFFFFF;
+        padding: 10px 40px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: #FFFFFF;
-        padding: 12px 40px;
-        border-bottom: 1px solid #E2E8F0;
-        margin-bottom: 20px;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 0px;
+        border-radius: 0px;
     }
-    .contact-item {
+    .top-bar-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .top-bar-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    /* 2. BRAND BAR (Navigation Area) */
+    .medicio-brand-bar {
+        background-color: #FFFFFF;
+        padding: 15px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #E2E8F0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+    }
+    .brand-logo-container {
         display: flex;
         align-items: center;
         gap: 10px;
-        font-size: 13.5px;
-        color: #475569;
     }
-    .contact-icon {
-        background-color: #E0F2FE;
-        color: #0284C7;
-        width: 32px;
-        height: 32px;
+    .brand-emblem {
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
+        background: linear-gradient(45deg, #FF6B6B, #4D96FF, #6BCB77, #FFD93D);
+        display: inline-block;
     }
-
-    /* GRADIENT HERO BANNER (Terinspirasi dari image_a8e725.jpg) */
-    .hero-banner {
-        background: linear-gradient(135deg, #0284C7 0%, #0D9488 100%);
-        border-radius: 20px;
-        padding: 45px 40px;
-        color: #FFFFFF;
-        margin-bottom: 35px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.3);
-    }
-    .hero-banner h1 {
-        color: #FFFFFF !important;
-        font-size: 38px;
+    .brand-title {
+        font-size: 24px;
         font-weight: 800;
-        margin: 0 0 10px 0;
-        letter-spacing: -1px;
+        color: #2c4964;
+        letter-spacing: -0.5px;
     }
-    .hero-banner p {
-        font-size: 16px;
-        color: #E0F2FE;
-        margin: 0;
-        max-width: 700px;
-        line-height: 1.6;
+    .brand-title span {
+        color: #3fbbc0;
     }
-    .hero-badge {
-        background-color: rgba(255, 255, 255, 0.2);
-        padding: 5px 15px;
-        border-radius: 9999px;
+    .brand-nav {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #2c4964;
+    }
+    .brand-nav-item {
+        color: #2c4964;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .brand-nav-item.active {
+        color: #3fbbc0;
+    }
+    .brand-btn {
+        background-color: #3fbbc0;
+        color: white;
+        padding: 8px 18px;
+        border-radius: 20px;
         font-size: 12px;
         font-weight: 600;
-        display: inline-block;
-        margin-bottom: 15px;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        border: none;
     }
 
-    /* CARDS & CONTAINERS (Terinspirasi dari image_a8e700.jpg) */
-    .white-card {
-        background-color: #FFFFFF;
+    /* 3. HERO SLIDER BANNER (image_a953c4.jpg style) */
+    .medicio-hero-section {
+        background: linear-gradient(135deg, rgba(63,187,192,0.1) 0%, rgba(241,246,254,0.9) 100%), 
+                    url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1200');
+        background-size: cover;
+        background-position: center;
         border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-        border: 1px solid #E2E8F0;
-        margin-bottom: 25px;
+        height: 380px;
+        position: relative;
+        margin-bottom: 35px;
+        box-shadow: inset 0 0 100px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 30px;
     }
-    .white-card h3 {
-        color: #0F172A;
-        font-weight: 700;
+    .medicio-hero-card {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-top: 4px solid #3fbbc0;
+        padding: 30px 40px;
+        width: 85%;
+        border-radius: 8px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .medicio-hero-card h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: #2c4964 !important;
         margin-top: 0;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #F1F5F9;
-        padding-bottom: 10px;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
     }
-
-    /* FLOATING FEATURE CARDS GRID (Terinspirasi dari bagian bawah image_a8e700.jpg) */
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin-top: 35px;
+    .medicio-hero-card p {
+        font-size: 14px;
+        color: #64748B;
+        max-width: 800px;
+        margin: 0 auto 15px auto;
+        line-height: 1.6;
     }
-    .feature-card {
-        background-color: #0F172A;
-        color: #FFFFFF;
-        padding: 24px;
-        border-radius: 16px;
-        border-bottom: 4px solid #0D9488;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
-    }
-    .feature-card:hover {
-        transform: translateY(-5px);
-    }
-    .feature-card h4 {
-        color: #2DD4BF !important;
-        margin-top: 0;
-        font-size: 18px;
-        font-weight: 700;
-    }
-    .feature-card p {
-        color: #94A3B8;
+    .medicio-hero-btn {
+        background-color: #3fbbc0;
+        color: white;
+        padding: 10px 24px;
+        border-radius: 4px;
         font-size: 13px;
-        line-height: 1.5;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+        box-shadow: 0 4px 6px rgba(63, 187, 192, 0.2);
+    }
+
+    /* 4. 4-COLUMN FEATURE CARDS GRID */
+    .medicio-feature-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 35px;
+    }
+    .medicio-feature-card {
+        background-color: #FFFFFF;
+        padding: 24px;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        border-bottom: 3px solid transparent;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+    .medicio-feature-card:hover {
+        transform: translateY(-5px);
+        border-color: #3fbbc0;
+    }
+    .medicio-feature-card-icon {
+        color: #3fbbc0;
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+    .medicio-feature-card h4 {
+        color: #2c4964 !important;
+        font-size: 16px;
+        font-weight: 700;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+    .medicio-feature-card p {
+        color: #64748B;
+        font-size: 12.5px;
+        line-height: 1.6;
         margin-bottom: 0;
     }
 
-    /* KARTU HASIL DIAGNOSIS PREMIUM */
-    .acne-result-card {
-        background: #FFFFFF;
-        color: #1E293B;
+    /* KARTU HASIL DIAGNOSIS PREMIUM (MEDICIO THEME) */
+    .medicio-result-card {
+        background-color: #FFFFFF;
+        border-radius: 12px;
         padding: 24px;
-        border-radius: 16px;
-        border-left: 6px solid #0D9488;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        border-left: 6px solid #3fbbc0;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.05);
         margin-top: 15px;
     }
-    .acne-result-card h3 {
-        color: #0F172A;
-        margin-top: 0;
-        font-size: 24px;
+    .medicio-result-card h3 {
+        color: #2c4964 !important;
+        font-size: 22px;
         font-weight: 800;
+        margin-top: 0;
+        margin-bottom: 15px;
     }
 
     /* BADGES & LABELS */
     .badge {
         display: inline-block;
-        padding: 6px 14px;
+        padding: 4px 12px;
         border-radius: 9999px;
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .badge-ringan { background-color: #DCFCE7; color: #166534; }
-    .badge-sedang { background-color: #FEF3C7; color: #92400E; }
-    .badge-berat { background-color: #FEE2E2; color: #991B1B; }
+    .badge-ringan { background-color: #E6F7F8; color: #1f8e94; }
+    .badge-sedang { background-color: #FEF3C7; color: #B45309; }
+    .badge-berat { background-color: #FEE2E2; color: #B91C1C; }
 
     /* CHAT BUBBLES INTERAKTIF */
     .chat-bubble { 
-        padding: 16px 20px; 
-        border-radius: 16px; 
+        padding: 14px 18px; 
+        border-radius: 8px; 
         margin-bottom: 15px; 
         max-width: 85%; 
         line-height: 1.6;
-        font-size: 14px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        font-size: 13.5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }
     .user-bubble { 
-        background-color: #0284C7; 
-        color: #FFFFFF; 
-        border-bottom-right-radius: 4px;
+        background-color: #E6F7F8; 
+        color: #2c4964; 
+        border-bottom-right-radius: 0px;
         margin-left: auto;
+        border-right: 4px solid #3fbbc0;
     }
     .ai-bubble { 
         background-color: #FFFFFF; 
-        color: #334155; 
-        border-bottom-left-radius: 4px;
+        color: #475569; 
+        border-bottom-left-radius: 0px;
         border: 1px solid #E2E8F0;
-    }
-
-    /* CUSTOM TOMBOL STREAMLIT */
-    .stButton>button {
-        background: linear-gradient(135deg, #0284C7 0%, #0D9488 100%) !important;
-        color: white !important;
-        font-weight: 700 !important;
-        border-radius: 10px !important;
-        border: none !important;
-        padding: 12px 24px !important;
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2) !important;
-        transition: all 0.2s ease !important;
-    }
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(13, 148, 136, 0.3) !important;
+        border-left: 4px solid #2c4964;
     }
 
     /* KOTAK RUTINITAS */
     .routine-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 24px;
         margin-top: 25px;
-        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     }
     .routine-header {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
-        color: #0F172A;
+        color: #2c4964;
         margin-bottom: 15px;
         border-bottom: 2px solid #F1F5F9;
         padding-bottom: 10px;
+    }
+
+    /* CUSTOM TOMBOL STREAMLIT (MEDICIO STYLE) */
+    .stButton>button {
+        background: #3fbbc0 !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-radius: 4px !important;
+        border: none !important;
+        padding: 10px 20px !important;
+        box-shadow: 0 4px 10px rgba(63, 187, 192, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    .stButton>button:hover {
+        background: #319fa3 !important;
+        transform: translateY(-1px);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -390,70 +446,70 @@ if "prediction_result" not in st.session_state:
     st.session_state.prediction_result = None
 
 # ==========================================
-# 7. HEADER TOP METADATA BAR (image_a8e764.jpg)
+# 7. MEDICIO HEADER SYSTEM (image_a953c4.jpg)
 # ==========================================
 st.markdown("""
-    <div class="top-contact-bar">
-        <div class="contact-item">
-            <div class="contact-icon">🏫</div>
-            <div>
-                <b style="color:#0F172A;">Universitas PGRI Sumatera Barat</b><br>
-                <span style="font-size:11.5px; color:#64748B;">Padang, Sumatera Barat, Indonesia</span>
-            </div>
+    <div class="medicio-top-bar">
+        <div class="top-bar-left">
+            <span>🕒 Senin - Sabtu, 08:00 - 22:00</span>
+            <span>🏫 Universitas PGRI Sumatera Barat</span>
         </div>
-        <div class="contact-item">
-            <div class="contact-icon">💻</div>
-            <div>
-                <b style="color:#0F172A;">Pengembangan Sistem Cerdas</b><br>
-                <span style="font-size:11.5px; color:#64748B;">Sistem Deteksi Medis Berbasis Deep Learning</span>
-            </div>
+        <div class="top-bar-right">
+            <span>👤 Hikary Jaidil Zaky (2026)</span>
+            <span>📱 Sistem Cerdas Kelas A</span>
         </div>
-        <div class="contact-item">
-            <div class="contact-icon">👤</div>
-            <div>
-                <b style="color:#0F172A;">Hikary Jaidil Zaky</b><br>
-                <span style="font-size:11.5px; color:#64748B;">Sistem Cerdas Kelas A (2026)</span>
-            </div>
+    </div>
+    
+    <div class="medicio-brand-bar">
+        <div class="brand-logo-container">
+            <div class="brand-emblem"></div>
+            <div class="brand-title">ACNECARE<span>AI</span></div>
+        </div>
+        <div class="brand-nav">
+            <span class="brand-nav-item active">Home</span>
+            <span class="brand-nav-item">Services</span>
+            <span class="brand-nav-item">Departments</span>
+            <span class="brand-nav-item">Doctors</span>
+            <span class="brand-nav-item">Contact</span>
+        </div>
+        <div>
+            <button class="brand-btn">Make an Appointment</button>
         </div>
     </div>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 8. SIDEBAR & MENU NAVIGASI
+# 8. SIDEBAR CONTROL PANEL
 # ==========================================
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2854/2854101.png", width=95)
-st.sidebar.markdown("<h2 style='margin-top:10px; color:#0F172A; font-weight:800;'>AcneCare AI</h2>", unsafe_allow_html=True)
-st.sidebar.markdown("<p style='font-size:13px; color:#64748B; margin-bottom:20px;'>Dermatological Expert Dashboard</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<h2 style='margin-top:10px; color:#2c4964; font-weight:800;'>AcneCare System</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size:13px; color:#64748B; margin-bottom:20px;'>Dermatological Expert Portal</p>", unsafe_allow_html=True)
 
 menu = st.sidebar.radio("PILIH LAYANAN UTAMA:", ["🔎 Deteksi Jerawat AI", "💬 Tanya Jawab Chatbot"])
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 🌐 Tautan Aplikasi Online")
-st.sidebar.info("Aplikasi ini dideploy secara otomatis ke repositori public cloud.")
+st.sidebar.markdown("### 🌐 Tautan Aplikasi Cloud")
+st.sidebar.info("Aplikasi dideploy otomatis ke server cloud public.")
 st.sidebar.code("https://acnecare-ai.streamlit.app/")
 
 # ==========================================
 # MENU 1: DETEKSI JERAWAT AI
 # ==========================================
 if menu == "🔎 Deteksi Jerawat AI":
-    # Hero Banner (image_a8e725.jpg)
     st.markdown("""
-        <div class="hero-banner">
-            <div class="hero-badge">Deep Learning CNN Classifier</div>
-            <h1>Medicine Made with Care</h1>
-            <p>Unggah foto atau gunakan kamera wajah Anda secara langsung untuk dianalisis oleh jaringan saraf konvolusional (CNN) secara instan, aman, dan tanpa biaya.</p>
+        <div class="medicio-hero-section">
+            <div class="medicio-hero-card">
+                <h1>Welcome to AcneCare AI</h1>
+                <p>Medicine made with care. Unggah foto keluhan kulit Anda atau ambil secara real-time untuk klasifikasi tingkat keparahan jerawat menggunakan Jaringan Saraf Konvolusional (CNN) secara akurat, instan, dan aman.</p>
+                <div class="medicio-hero-btn">Deep Learning CNN Classifier</div>
+            </div>
         </div>
     """, unsafe_allow_html=True)
     
     col1, col2 = st.columns([4, 5], gap="large")
     
     with col1:
-        st.markdown("""
-            <div class="white-card">
-                <h3>📸 Ambil & Unggah Gambar</h3>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.markdown("<h3 style='color:#2c4964; font-weight:700;'>📸 Ambil & Unggah Gambar</h3>", unsafe_allow_html=True)
         src_option = st.radio("Pilih Metode Pengambilan:", ["Unggah File Gambar", "Gunakan Kamera Wajah"])
         
         temp_img = None
@@ -469,27 +525,21 @@ if menu == "🔎 Deteksi Jerawat AI":
                 st.session_state.prediction_result = None
             
     with col2:
-        st.markdown("""
-            <div class="white-card">
-                <h3>📊 Hasil Klasifikasi Medis</h3>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#2c4964; font-weight:700;'>📊 Laporan Hasil Deteksi</h3>", unsafe_allow_html=True)
         
         if st.session_state.uploaded_image is not None:
             try:
                 image = Image.open(st.session_state.uploaded_image)
-                st.image(image, caption="Citra Wajah Input", use_container_width=True)
+                st.image(image, caption="Citra Wajah Masukan", use_container_width=True)
                 
-                # Jarak vertikal kecil
                 st.write("")
                 if st.button("Mulai Deteksi Jerawat"):
-                    with st.spinner("Mengevaluasi gambar dengan model cerdas..."):
+                    with st.spinner("Mengevaluasi gambar dengan jaringan saraf tiruan..."):
                         model = load_acne_model()
                         
                         if model is None:
                             st.error("Model 'model_jerawat_5kelas.keras' gagal dimuat.")
                         else:
-                            # Preprocessing
                             img_resized = image.resize((224, 224))
                             img_array = np.array(img_resized)
                             if img_array.shape[-1] == 4:
@@ -497,7 +547,6 @@ if menu == "🔎 Deteksi Jerawat AI":
                             img_array = img_array / 255.0
                             img_array = np.expand_dims(img_array, axis=0)
                             
-                            # Jalankan prediksi
                             prediction = model.predict(img_array)
                             class_idx = np.argmax(prediction)
                             predicted_class = class_names[class_idx]
@@ -509,7 +558,6 @@ if menu == "🔎 Deteksi Jerawat AI":
                                 "date": datetime.now().strftime("%d %B %Y - %H:%M")
                             }
                 
-                # Render hasil jika sudah ada prediksi
                 if st.session_state.prediction_result is not None:
                     res = st.session_state.prediction_result
                     predicted_class = res["predicted_class"]
@@ -525,25 +573,23 @@ if menu == "🔎 Deteksi Jerawat AI":
                         "solutions": "Consult with a specialist."
                     })
                     
-                    # Tampilan diagnosis modern dengan CSS yang diperbarui
+                    # Tampilan diagnosis modern Medicio Style
                     st.markdown(f"""
-                        <div class="acne-result-card">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <h3 style="margin:0;">🏷️ {details['id_name']}</h3>
+                        <div class="medicio-result-card">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                <h3 style="margin:0; color:#2c4964;">🏷️ {details['id_name']}</h3>
                                 <span class="badge {details['badge_class']}">{details['severity']}</span>
                             </div>
                             <hr style="border: 0; border-top: 1px solid #E2E8F0; margin: 15px 0;">
-                            <p style="font-size:14px; margin: 5px 0;"><b>Persentase Keyakinan:</b> {confidence:.2f}%</p>
-                            <p style="font-size:14px; margin: 5px 0;"><b>Tanggal Diagnosis:</b> {detection_date}</p>
-                            <p style="font-size:14.5px; color:#475569; margin: 15px 0 5px 0; line-height:1.6;"><b>Deskripsi Medis:</b><br>{details['desc']}</p>
-                            <p style="font-size:14.5px; color:#475569; margin: 10px 0 5px 0; line-height:1.6;"><b>Penyebab Utama:</b><br>{details['causes']}</p>
-                            <p style="font-size:14.5px; color:#475569; margin: 10px 0 0 0; line-height:1.6;"><b>Rekomendasi Penanganan:</b><br>{details['solutions']}</p>
+                            <p style="font-size:14px; margin: 5px 0; color:#2c4964;"><b>Persentase Keyakinan:</b> {confidence:.2f}%</p>
+                            <p style="font-size:14px; margin: 5px 0; color:#2c4964;"><b>Tanggal Diagnosis:</b> {detection_date}</p>
+                            <p style="font-size:14px; color:#475569; margin: 15px 0 5px 0; line-height:1.6;"><b>Deskripsi Medis:</b><br>{details['desc']}</p>
+                            <p style="font-size:14px; color:#475569; margin: 10px 0 5px 0; line-height:1.6;"><b>Penyebab Utama:</b><br>{details['causes']}</p>
+                            <p style="font-size:14px; color:#475569; margin: 10px 0 0 0; line-height:1.6;"><b>Rekomendasi Penanganan:</b><br>{details['solutions']}</p>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # --------------------------------------------------
-                    # FITUR EXPORT 1: DOWNLOAD PDF/TXT REPORT
-                    # --------------------------------------------------
+                    # FITUR EXPORT 1: DOWNLOAD REPORT (TXT)
                     report_text = f"""==================================================
         LAPORAN DIAGNOSIS KLINIS - ACNECARE AI
 ==================================================
@@ -582,9 +628,7 @@ Silakan konsultasikan dengan dokter spesialis kulit (Sp.DVE) untuk diagnosis kli
                         mime="text/plain"
                     )
                     
-                    # --------------------------------------------------
                     # FITUR EXPORT 2: AM/PM ROUTINE BUILDER
-                    # --------------------------------------------------
                     st.markdown("""<div class="routine-box">""", unsafe_allow_html=True)
                     st.markdown("<div class='routine-header'>🗓️ AM & PM Acne Routine Builder</div>", unsafe_allow_html=True)
                     st.markdown("<p style='font-size:13px; color:#64748B;'>Centang langkah-langkah skincare harian yang telah Anda lakukan hari ini untuk menjaga barier kulit:</p>", unsafe_allow_html=True)
@@ -606,20 +650,27 @@ Silakan konsultasikan dengan dokter spesialis kulit (Sp.DVE) untuk diagnosis kli
         else:
             st.info("Gunakan opsi input di panel sebelah kiri untuk memproses deteksi jerawat.")
 
-    # FLOATING FEATURE CARDS (Terinspirasi dari image_a8e700.jpg bagian bawah)
     st.markdown("""
-        <div class="feature-grid">
-            <div class="feature-card">
-                <h4>⚡ Analisis Cepat 1 Detik</h4>
+        <div class="medicio-feature-grid">
+            <div class="medicio-feature-card">
+                <div class="medicio-feature-card-icon">⚡</div>
+                <h4>Analisis 1 Detik</h4>
                 <p>Model neural network kami menganalisis citra jerawat Anda dalam hitungan detik untuk klasifikasi jenis kulit bermasalah secara langsung.</p>
             </div>
-            <div class="feature-card">
-                <h4>🎯 Akurasi CNN Maksimal</h4>
+            <div class="medicio-feature-card">
+                <div class="medicio-feature-card-icon">🎯</div>
+                <h4>Akurasi CNN</h4>
                 <p>Arsitektur 3-lapisan konvolusi memastikan ekstraksi parameter klinis dilakukan dengan fokus pada area bengkak dan komedo wajah.</p>
             </div>
-            <div class="feature-card">
-                <h4>🔒 Konsultasi Offline & Privat</h4>
+            <div class="medicio-feature-card">
+                <div class="medicio-feature-card-icon">🔒</div>
+                <h4>Privasi Aman</h4>
                 <p>Setiap foto dianalisis secara lokal dan riwayat obrolan tidak dikirim ke server luar, menjaga privasi rekam medis Anda seutuhnya.</p>
+            </div>
+            <div class="medicio-feature-card">
+                <div class="medicio-feature-card-icon">🩺</div>
+                <h4>Edukasi Mandiri</h4>
+                <p>Menyajikan instruksi pengobatan klinis dan rujukan skincare harian yang disesuaikan secara dinamis untuk barier kulit wajah.</p>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -628,23 +679,19 @@ Silakan konsultasikan dengan dokter spesialis kulit (Sp.DVE) untuk diagnosis kli
 # MENU 2: TANYA JAWAB CHATBOT AI
 # ==========================================
 elif menu == "💬 Tanya Jawab Chatbot":
-    # Hero Banner (image_a8e725.jpg)
     st.markdown("""
-        <div class="hero-banner" style="background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); box-shadow: 0 10px 25px -5px rgba(15, 118, 110, 0.3);">
-            <div class="hero-badge">Smart Offline Assistant</div>
-            <h1>Interaktif Tanya Jawab Kesehatan Kulit</h1>
-            <p>Konsultasikan keluhan kulit atau tanyakan tips seputar jerawat pada asisten lokal kami secara langsung tanpa kuota internet.</p>
+        <div class="medicio-hero-section" style="background: linear-gradient(135deg, rgba(63,187,192,0.1) 0%, rgba(241,246,254,0.9) 100%), url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=1200'); height:220px;">
+            <div class="medicio-hero-card" style="padding: 15px 30px; width: 90%;">
+                <h1 style="font-size:24px; margin-bottom:5px;">Interaktif Tanya Jawab Kesehatan Kulit</h1>
+                <p style="font-size:13px; margin-bottom:0px;">Konsultasikan keluhan kulit atau tanyakan tips seputar jerawat pada asisten lokal kami secara langsung tanpa kuota internet.</p>
+            </div>
         </div>
     """, unsafe_allow_html=True)
     
     col_chat, col_info = st.columns([3, 2], gap="large")
     
     with col_chat:
-        st.markdown("""
-            <div class="white-card">
-                <h3>💬 Ruang Percakapan</h3>
-            </div>
-        """, unsafe_allow_html=True)
+        st.subheader("💬 Ruang Percakapan")
         
         chat_container = st.container()
         with chat_container:
@@ -683,11 +730,7 @@ elif menu == "💬 Tanya Jawab Chatbot":
             st.rerun()
             
     with col_info:
-        st.markdown("""
-            <div class="white-card">
-                <h3>💡 Panduan Penanganan Medis</h3>
-            </div>
-        """, unsafe_allow_html=True)
+        st.subheader("💡 Panduan Penanganan Medis")
         st.markdown("<p style='font-size:13.5px; color:#64748B;'>Klik salah satu topik di bawah ini untuk mendapatkan jawaban edukasi instan:</p>", unsafe_allow_html=True)
         
         with st.expander("🚫 Bolehkah memencet jerawat yang sedang meradang?"):
