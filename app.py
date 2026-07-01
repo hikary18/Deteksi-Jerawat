@@ -7,6 +7,7 @@ from datetime import datetime
 # ==========================================
 # 1. OPTIMALISASI AWAL (Mencegah Lag & Flicker)
 # ==========================================
+# Menonaktifkan pencarian driver GPU CUDA secara agresif untuk mempercepat load TensorFlow di CPU
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
@@ -217,6 +218,24 @@ st.markdown("""
     .stButton>button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(13, 148, 136, 0.3) !important;
+    }
+
+    /* KOTAK RUTINITAS */
+    .routine-box {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 25px;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    }
+    .routine-header {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0F172A;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #F1F5F9;
+        padding-bottom: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -567,7 +586,7 @@ Silakan konsultasikan dengan dokter spesialis kulit (Sp.DVE) untuk diagnosis kli
                     # FITUR EXPORT 2: AM/PM ROUTINE BUILDER
                     # --------------------------------------------------
                     st.markdown("""<div class="routine-box">""", unsafe_allow_html=True)
-                    st.markdown("<div class="routine-header">🗓️ AM & PM Acne Routine Builder</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='routine-header'>🗓️ AM & PM Acne Routine Builder</div>", unsafe_allow_html=True)
                     st.markdown("<p style='font-size:13px; color:#64748B;'>Centang langkah-langkah skincare harian yang telah Anda lakukan hari ini untuk menjaga barier kulit:</p>", unsafe_allow_html=True)
                     
                     tab_am, tab_pm = st.tabs(["☀️ Rutinitas Pagi (AM)", "🌙 Rutinitas Malam (PM)"])
